@@ -16,6 +16,7 @@ export interface PlayerState {
 export interface GameState {
   tick: number;
   players: PlayerState[];
+  walls?: WallSegment[]; // only present on tick 1 — sent once to bootstrap the client
 }
 
 export interface WallSegment {

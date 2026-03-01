@@ -24,8 +24,6 @@ export class GameLoop {
 
   start(): void {
     if (this.intervalId) return;
-    // Send maze layout once before the loop begins
-    this.io.to(this.room.code).emit(EVENTS.GAME_MAZE, this.gameState.getWalls());
     this.intervalId = setInterval(() => this.step(), TICK_MS);
   }
 

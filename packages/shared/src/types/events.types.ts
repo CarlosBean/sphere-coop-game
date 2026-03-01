@@ -1,4 +1,4 @@
-import type { InputSnapshot, GameState, WallSegment, GameOverData } from './game.types.js';
+import type { InputSnapshot, GameState, GameOverData } from './game.types.js';
 import type { RoomInfo } from './room.types.js';
 
 export interface ClientToServerEvents {
@@ -17,7 +17,6 @@ export interface ServerToClientEvents {
   'room:error': (message: string) => void;
   'lobby:update': (info: RoomInfo) => void;
   'game:starting': (countdown: number) => void;
-  'game:maze': (walls: WallSegment[]) => void;
   'game:stateUpdate': (state: GameState) => void;
   'game:over': (data: GameOverData | null) => void;
   'players:ping': (pings: Record<string, number>) => void;

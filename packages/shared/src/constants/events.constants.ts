@@ -19,9 +19,6 @@ export const EVENTS = {
   PLAYER_PING: 'player:ping',
   PLAYERS_PING: 'players:ping',
 
-  // Game data
-  GAME_MAZE: 'game:maze',
-
   // Utility
   PING: 'ping',
 } as const;

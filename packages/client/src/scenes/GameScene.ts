@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { EVENTS, WORLD_WIDTH, WORLD_HEIGHT } from '@sphere-coop/shared';
-import type { RoomInfo, GameState, LobbyPlayer, WallSegment, GameOverData } from '@sphere-coop/shared';
+import type { RoomInfo, GameState, LobbyPlayer, GameOverData } from '@sphere-coop/shared';
 import { getSocket } from '../network/SocketManager.js';
 import { PingManager } from '../network/PingManager.js';
 import { InputHandler } from '../utils/InputHandler.js';
@@ -47,11 +47,6 @@ export class GameScene extends Phaser.Scene {
     this.inputHandler = new InputHandler();
     this.lobbyPlayers = this.roomInfo.players;
 
-    // Receive maze layout (sent once before the game loop starts)
-    socket.once(EVENTS.GAME_MAZE, (walls: WallSegment[]) => {
-      this.mazeRenderer = new MazeRenderer(this, walls);
-    });
-
     socket.on(EVENTS.GAME_STATE_UPDATE, (state: GameState) => {
       if (!this.gameOver) this.onStateUpdate(state, socketId);
     });
@@ -78,6 +73,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onStateUpdate(state: GameState, socketId: string): void {
+    // Walls arrive on tick 1 — build the renderer exactly once
+    if (state.walls && !this.mazeRenderer) {
+      this.mazeRenderer = new MazeRenderer(this, state.walls);
+    }
+
     for (const playerState of state.players) {
       if (playerState.id === socketId) {
         if (!this.localPlayer) {
@@ -152,7 +152,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private cleanup(socket: ReturnType<typeof getSocket>): void {
-    socket.off(EVENTS.GAME_MAZE);
     socket.off(EVENTS.GAME_STATE_UPDATE);
     socket.off(EVENTS.GAME_OVER);
     this.pingManager.stop();
