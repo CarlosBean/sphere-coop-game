@@ -90,7 +90,7 @@ export class GameState {
       players: this.state.players.map(p => ({ ...p })),
       // Include walls on tick 1 so the client can build the MazeRenderer
       // once it is already inside GameScene and listening to stateUpdate.
-      ...(this.state.tick === 1 ? { walls: this.walls } : {}),
+      ...(this.state.tick <= 40 ? { walls: this.walls } : {}),
     };
   }
 }

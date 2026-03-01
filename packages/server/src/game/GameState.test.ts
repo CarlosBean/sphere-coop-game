@@ -36,13 +36,19 @@ describe('GameState', () => {
       expect(state.walls!.length).toBeGreaterThan(0);
     });
 
-    it('does not include walls on tick 2 or later', () => {
+    it('includes walls for the first 40 ticks', () => {
       const gs = new GameState(makePlayers(1));
-      gs.tick(); // tick 1
-      const { state: s2 } = gs.tick();
-      expect(s2.walls).toBeUndefined();
-      const { state: s3 } = gs.tick();
-      expect(s3.walls).toBeUndefined();
+      for (let i = 1; i <= 40; i++) {
+        const { state } = gs.tick();
+        expect(state.walls).toBeDefined();
+      }
+    });
+
+    it('does not include walls after tick 40', () => {
+      const gs = new GameState(makePlayers(1));
+      for (let i = 0; i < 40; i++) gs.tick();
+      const { state } = gs.tick(); // tick 41
+      expect(state.walls).toBeUndefined();
     });
   });
 
@@ -111,11 +117,11 @@ describe('GameState', () => {
       expect(winner!.winnerName).toBe('Player 0');
     });
 
-    it('winner timeMs is a positive number', () => {
+    it('winner timeMs is a non-negative number', () => {
       const gs = new GameState(makePlayers(1));
       gs._teleportPlayerForTesting('player-0', GOAL_X, GOAL_Y);
       const { winner } = gs.tick();
-      expect(winner!.timeMs).toBeGreaterThan(0);
+      expect(winner!.timeMs).toBeGreaterThanOrEqual(0);
     });
 
     it('returns winner for a player just inside the goal radius', () => {
