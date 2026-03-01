@@ -12,6 +12,13 @@
     "dev:client": "npm run dev --workspace=packages/client",
     "build:shared": "npm run build --workspace=packages/shared",
     "build:server": "npm run build --workspace=packages/server",
-    "build:client": "npm run build --workspace=packages/client"
+    "build:client": "npm run build --workspace=packages/client",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@vitest/coverage-v8": "^2.0.0"
   }
 }

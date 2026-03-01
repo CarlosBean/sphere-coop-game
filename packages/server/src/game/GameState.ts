@@ -78,6 +78,12 @@ export class GameState {
     return null;
   }
 
+  /** Test-only: teleport a player to arbitrary coordinates for unit testing. */
+  _teleportPlayerForTesting(socketId: string, x: number, y: number): void {
+    const player = this.state.players.find(p => p.id === socketId);
+    if (player) { player.x = x; player.y = y; }
+  }
+
   getSnapshot(): IGameState {
     return {
       tick: this.state.tick,
