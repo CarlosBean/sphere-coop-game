@@ -13,15 +13,19 @@ export class GameLoop {
   private room: Room;
   private gameState: GameState;
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private onGameEnd: () => void;
 
-  constructor(io: IO, room: Room) {
+  constructor(io: IO, room: Room, onGameEnd: () => void) {
     this.io = io;
     this.room = room;
     this.gameState = new GameState(room.getAllPlayers());
+    this.onGameEnd = onGameEnd;
   }
 
   start(): void {
     if (this.intervalId) return;
+    // Send maze layout once before the loop begins
+    this.io.to(this.room.code).emit(EVENTS.GAME_MAZE, this.gameState.getWalls());
     this.intervalId = setInterval(() => this.step(), TICK_MS);
   }
 
@@ -29,6 +33,7 @@ export class GameLoop {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      this.onGameEnd();
     }
   }
 
@@ -37,7 +42,12 @@ export class GameLoop {
   }
 
   private step(): void {
-    const state = this.gameState.tick();
+    const { state, winner } = this.gameState.tick();
     this.io.to(this.room.code).emit(EVENTS.GAME_STATE_UPDATE, state);
+
+    if (winner) {
+      this.io.to(this.room.code).emit(EVENTS.GAME_OVER, winner);
+      this.stop();
+    }
   }
 }

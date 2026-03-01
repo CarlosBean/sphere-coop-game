@@ -74,7 +74,10 @@ export function registerRoomHandlers(
         io.to(room.code).emit(EVENTS.GAME_STARTING, count);
       } else {
         clearInterval(countInterval);
-        const loop = new GameLoop(io, room);
+        const loop = new GameLoop(io, room, () => {
+          room.inGame = false;
+          gameLoops.delete(room.code);
+        });
         gameLoops.set(room.code, loop);
         loop.start();
         io.to(room.code).emit(EVENTS.GAME_STARTING, 0);

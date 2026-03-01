@@ -13,17 +13,22 @@ export interface PlayerState {
   vy: number;
 }
 
-export interface BallState {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-}
-
 export interface GameState {
   tick: number;
   players: PlayerState[];
-  ball: BallState;
+}
+
+export interface WallSegment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface GameOverData {
+  winnerId: string;
+  winnerName: string;
+  timeMs: number;
 }
 
 export interface InputSnapshot {

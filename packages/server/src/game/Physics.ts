@@ -1,9 +1,9 @@
 import {
   PLAYER_SPEED, FRICTION, TICK_MS,
-  SPHERE_RADIUS, BALL_RADIUS,
+  SPHERE_RADIUS,
   WORLD_WIDTH, WORLD_HEIGHT,
 } from '@sphere-coop/shared';
-import type { PlayerState, BallState, InputSnapshot } from '@sphere-coop/shared';
+import type { PlayerState, WallSegment, InputSnapshot } from '@sphere-coop/shared';
 
 const DT = TICK_MS / 1000; // seconds per tick
 
@@ -28,56 +28,47 @@ export function stepPlayer(player: PlayerState): void {
   player.x += player.vx * DT;
   player.y += player.vy * DT;
 
-  // Wall clamp
+  // World boundary clamp (fallback)
   player.x = Math.max(SPHERE_RADIUS, Math.min(WORLD_WIDTH  - SPHERE_RADIUS, player.x));
   player.y = Math.max(SPHERE_RADIUS, Math.min(WORLD_HEIGHT - SPHERE_RADIUS, player.y));
 }
 
-export function stepBall(ball: BallState): void {
-  ball.vx *= FRICTION;
-  ball.vy *= FRICTION;
-  ball.x += ball.vx * DT;
-  ball.y += ball.vy * DT;
+// ─── Wall collision ────────────────────────────────────────────────────────────
 
-  // Wall bounce
-  if (ball.x - BALL_RADIUS < 0) {
-    ball.x = BALL_RADIUS;
-    ball.vx = Math.abs(ball.vx);
-  } else if (ball.x + BALL_RADIUS > WORLD_WIDTH) {
-    ball.x = WORLD_WIDTH - BALL_RADIUS;
-    ball.vx = -Math.abs(ball.vx);
-  }
-  if (ball.y - BALL_RADIUS < 0) {
-    ball.y = BALL_RADIUS;
-    ball.vy = Math.abs(ball.vy);
-  } else if (ball.y + BALL_RADIUS > WORLD_HEIGHT) {
-    ball.y = WORLD_HEIGHT - BALL_RADIUS;
-    ball.vy = -Math.abs(ball.vy);
-  }
+function closestPointOnSegment(
+  px: number, py: number,
+  x1: number, y1: number, x2: number, y2: number,
+): { x: number; y: number } {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return { x: x1, y: y1 };
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+  return { x: x1 + t * dx, y: y1 + t * dy };
 }
 
-export function resolvePlayerBallCollision(player: PlayerState, ball: BallState): void {
-  const minDist = SPHERE_RADIUS + BALL_RADIUS;
-  const dx = ball.x - player.x;
-  const dy = ball.y - player.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist >= minDist || dist === 0) return;
+export function resolvePlayerWallCollisions(player: PlayerState, walls: WallSegment[]): void {
+  for (const wall of walls) {
+    const closest = closestPointOnSegment(player.x, player.y, wall.x1, wall.y1, wall.x2, wall.y2);
+    const dx = player.x - closest.x;
+    const dy = player.y - closest.y;
+    const distSq = dx * dx + dy * dy;
 
-  const nx = dx / dist;
-  const ny = dy / dist;
+    if (distSq < SPHERE_RADIUS * SPHERE_RADIUS && distSq > 0.0001) {
+      const dist = Math.sqrt(distSq);
+      const nx = dx / dist;
+      const ny = dy / dist;
 
-  // Separate
-  const overlap = minDist - dist;
-  ball.x += nx * overlap;
-  ball.y += ny * overlap;
+      // Push player outside the wall
+      player.x = closest.x + nx * SPHERE_RADIUS;
+      player.y = closest.y + ny * SPHERE_RADIUS;
 
-  // Transfer velocity impulse
-  const relVx = player.vx - ball.vx;
-  const relVy = player.vy - ball.vy;
-  const impulse = relVx * nx + relVy * ny;
-  if (impulse > 0) {
-    ball.vx += impulse * nx;
-    ball.vy += impulse * ny;
+      // Cancel velocity component pointing into the wall
+      const dot = player.vx * nx + player.vy * ny;
+      if (dot < 0) {
+        player.vx -= dot * nx;
+        player.vy -= dot * ny;
+      }
+    }
   }
 }
 
