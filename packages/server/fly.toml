@@ -7,7 +7,6 @@ app = 'sphere-coop-server'
 primary_region = 'iad'
 
 [build]
-  dockerfile = "packages/server/Dockerfile"
 
 [http_service]
   internal_port = 3001
